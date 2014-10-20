@@ -124,7 +124,7 @@ google.maps.event.addDomListener(window, 'load', initialize);
 <div id="container" style="height: 50px; width: 100%; position: absolute; z-index: 100; background-color: beige"><div style="height: 40px; padding-top: 10px; padding-left: 10px; width: 300px; font-size: 24;">Transit Linr</div>
 <div style="height: 20px; width: 300px; padding-top: 2px; padding-left: 10px; padding-right: 10px; float: left; background-color: orange"><input type="file" id="csv-file" name="files"/><button onclick="createPlotList()">Run Map</button></div></div>
 
-<div id="canvasWrapper" style="width: 90%; height: 90%; position: absolute; z-index: 50;"><canvas id="myCanvas"></canvas></div>
+<div id="canvasWrapper" style="width: 90%; height: 90%; background-color: grey; position: absolute; z-index: 50;"><canvas id="myCanvas"></canvas></div>
 <div id="map-canvas" style="z-index: 0;"></div>
 
 </body>
@@ -160,7 +160,7 @@ function initCanvas() {
         var radius = 70;
 
         context.beginPath();
-        context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+        context.arc(111, 111, radius, 0, 2 * Math.PI, false);
         context.fillStyle = 'green';
         context.fill();
         context.lineWidth = 5;
