@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>Transit Line</title>
+        <title>Transit Linr</title>
         <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
         <meta charset="utf-8">
         <style>
@@ -17,7 +17,7 @@
         <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=visualization"></script>
         <script>
             // handle the loaded csv data and read it into var data  
-            var data; 
+            var linePoints = []; 
             function handleFileSelect(evt) {
                 var file = evt.target.files[0];
                 Papa.parse(file, {
@@ -25,9 +25,20 @@
                     dynamicTyping: true,
                     complete: function(results) {
                         data = results;
+                        parseFileData(data);
                         }
                     });
+            }
+
+            function parseFileData(data){
+                lat = testName(['Lat', 'lat', 'Latitude', 'latitude']);
+                lng = testName(['Lng', 'lng', 'long', 'Long', 'Longitude', 'longitude']);
+                alt = testName(['Alt', 'alt', 'Altitude', 'altitude']);
+                time = "Date"
+                for(var i = 0; i < data['data'].length; i++) {
+                    linePoints[i] = new dataPoint(i, data['data'][i][time],data['data'][i][lat], data['data'][i][lng], data['data'][i][alt]);
                 }
+            }
             
             $(document).ready(function(){
                 $("#csv-file").change(handleFileSelect);
@@ -35,6 +46,7 @@
             
             
             // iterate through the csv data to extract lat and lng
+            // checks which name of field from a list is included in the CSV file data and returns it if correct.
             function testName(optionList) {
                 var correctName = '';
                 for (i = 0; i < optionList.length; i++) {
@@ -55,12 +67,9 @@
             }
             
             function createPlotList() {
-                console.log("Generating pointArray...")
-                lat = testName(['Lat', 'lat', 'Latitude', 'latitude']);
-                lng = testName(['Lng', 'lng', 'Longitude', 'longitude']);
-                for(var i = 0; i < (data['data'].length/80); i++) {
+                for(var i = 0; i < (linePoints.length/80); i++) {
                     var marker = new google.maps.Marker({
-                        position: new google.maps.LatLng( data['data'][i][lat], data['data'][i][lng] ),
+                        position: new google.maps.LatLng(linePoints[i].lat, linePoints[i].lng),
                         map: map,
                         icon: {
                             path: google.maps.SymbolPath.CIRCLE,
@@ -136,6 +145,16 @@
             
             window.onloadstart(initCanvas());
 
+            function dataPoint (index, timestamp, lat, lng, alt){
+                this.index = index;
+                this.timestamp = timestamp;
+                this.lat = lat;
+                this.lng = lng;
+                this.alt = alt;
+                var newParagraph = document.createElement('p');
+                newParagraph.textContent = index + " " + timestamp + " " + lat + " " + lng + " " + alt;
+            }
+
             // UX INPUT STUFF!!!
             //*************************************+
             function showInput(){
@@ -163,8 +182,8 @@
         <div id="container" style="height: 50px; width: 100%; position: absolute; z-index: 100; background-color: beige">
             <div style="height: 40px; padding-top: 10px; padding-left: 10px; width: 300px; font-size: 24;">Transit Linr</div>
             <div style="width: 300px; padding-top: 2px; padding-left: 10px; padding-right: 10px; float: left; background-color: orange">
-                <input type="radio" name="input_type" value="CSV" id = "csv_radio" onclick = "showInput()">From CSV file<br>
-                <input type="radio" name="input_type" value="Fusion Table" id = "fusion_tables_radio" onclick = "showInput()">From Fusion table<br>
+                <input type="radio" name="input_type" value="CSV" id = "csv_radio" onclick = "showInput()">From CSV file
+                <input type="radio" name="input_type" value="Fusion Table" id = "fusion_tables_radio" onclick = "showInput()">From Flocktracker<br>
                 <div style="display:none" id="csv_input">
                     <input type="file" id="csv-file" name="files"/><br>
                 </div>
