@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>Transit Linr</title>
+        <title>Transit Line</title>
         <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
         <meta charset="utf-8">
         <style>
@@ -135,12 +135,45 @@
             };
             
             window.onloadstart(initCanvas());
+
+            // UX INPUT STUFF!!!
+            //*************************************+
+            function showInput(){
+                var csvRadio = document.getElementById("csv_radio");
+                var fusionTablesRadio = document.getElementById("fusion_tables_radio");
+                var csvInput = document.getElementById('csv_input');
+                var fusionTablesInput = document.getElementById('fusion_tables_input');
+                var runMapButton = document.getElementById('run_map_button');
+                if(csvRadio.checked){
+                    csvInput.style.display="inherit";
+                    fusionTablesInput.style.display="none";
+                    runMapButton.style.display="inherit";
+                   // window.alert(document.getElementById('csv_input').style.display);
+                } else if(fusionTablesRadio.checked){
+                    csvInput.style.display="none";
+                    fusionTablesInput.style.display="inherit";
+                    runMapButton.style.display="inherit";
+                   // window.alert(document.getElementById('csv_input').style.display);
+                }
+            }
+            // END OF UX STUFF
             
         </script>
     <body>
         <div id="container" style="height: 50px; width: 100%; position: absolute; z-index: 100; background-color: beige">
             <div style="height: 40px; padding-top: 10px; padding-left: 10px; width: 300px; font-size: 24;">Transit Linr</div>
-            <div style="height: 20px; width: 300px; padding-top: 2px; padding-left: 10px; padding-right: 10px; float: left; background-color: orange"><input type="file" id="csv-file" name="files"/><button onclick="createPlotList()">Run Map</button></div>
+            <div style="width: 300px; padding-top: 2px; padding-left: 10px; padding-right: 10px; float: left; background-color: orange">
+                <input type="radio" name="input_type" value="CSV" id = "csv_radio" onclick = "showInput()">From CSV file<br>
+                <input type="radio" name="input_type" value="Fusion Table" id = "fusion_tables_radio" onclick = "showInput()">From Fusion table<br>
+                <div style="display:none" id="csv_input">
+                    <input type="file" id="csv-file" name="files"/><br>
+                </div>
+                <div style="display:none" id="fusion_tables_input">
+                    Fusion Tables ID <input type="text" name="fusionTableIDField"><br>
+                    Trip ID <input type="text" name="tripIDfield"><br>
+                </div>
+                <button onclick="createPlotList()" style="display:none" id = "run_map_button">Run Map</button>
+            </div>
         </div>
         <div id="canvasWrapper" style="width: 100%; height: 100%; position: absolute; z-index: 50;">
             <canvas id="myCanvas"></canvas>
