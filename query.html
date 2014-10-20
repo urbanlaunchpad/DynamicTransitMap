@@ -1,0 +1,46 @@
+<html>
+  <head>
+    <script type="text/javascript">
+    var fusionTableID = "1ZcENe5z6cxNPjH6kQeiTZ-__9-wgdbobvzL_994";
+    var tripID = "T2741456"
+    var trackerPoints = [];
+    function initialize(){
+        getTrackerInfo();
+    }
+        function getTrackerInfo(){
+            var script = document.createElement('script');
+            var url = ['https://www.googleapis.com/fusiontables/v1/query?'];
+            url.push('sql=');
+            var query = "SELECT Date, Lat, Alt, Lng FROM " + fusionTableID + " WHERE TripID = '" + tripID + "' ORDER BY Date ASC";
+            var encodedQuery = encodeURIComponent(query);
+            url.push(encodedQuery);
+            url.push('&callback=parseData');
+            url.push('&key=AIzaSyANk7unPrpT9r-ECaDzH7eLpog-SD8Dz-0');
+            script.src = url.join('');
+            var body = document.getElementsByTagName('body')[0];
+            body.appendChild(script);
+          }
+        function parseData(data){
+            var rows = data['rows'];
+             window.alert("ima here");
+            for (var i in rows) {
+                trackerPoints[i] = new trackerPoint(i, rows[i][0],rows[i][1],rows[i][2],rows[i][3]);
+            }
+          }
+          function trackerPoint (index, timestamp, lat, lng, alt){
+            this.index = index;
+            this.timestamp = timestamp;
+            this.lat = lat;
+            this.lng = lng;
+            this.alt = alt;
+            var newParagraph = document.createElement('p');
+            newParagraph.textContent = index + " " + timestamp + " " + lat + " " + lng + " " + alt;
+            document.getElementById("testSite").appendChild(newParagraph);
+          }
+        </script>
+    </head>
+    <body onload="initialize()">  
+        <div id="testSite">
+        </div>     
+    </body>
+</html>
