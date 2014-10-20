@@ -30,6 +30,7 @@
                     });
             }
 
+            // We assume that data is ordered on time here and that the timestamp name is Date
             function parseFileData(data){
                 lat = testName(['Lat', 'lat', 'Latitude', 'latitude']);
                 lng = testName(['Lng', 'lng', 'long', 'Long', 'Longitude', 'longitude']);
@@ -67,7 +68,7 @@
             }
             
             function createPlotList() {
-                for(var i = 0; i < (linePoints.length/80); i++) {
+                for(var i = 0; i < linePoints.length; i++) {
                     var marker = new google.maps.Marker({
                         position: new google.maps.LatLng(linePoints[i].lat, linePoints[i].lng),
                         map: map,
@@ -151,8 +152,30 @@
                 this.lat = lat;
                 this.lng = lng;
                 this.alt = alt;
-                var newParagraph = document.createElement('p');
-                newParagraph.textContent = index + " " + timestamp + " " + lat + " " + lng + " " + alt;
+            }
+
+            function getTrackerInfo(){
+                var fusionTableID = "1ZcENe5z6cxNPjH6kQeiTZ-__9-wgdbobvzL_994";
+                var tripID = "T2741456"
+                var script = document.createElement('script');
+                var url = ['https://www.googleapis.com/fusiontables/v1/query?'];
+                url.push('sql=');
+                var query = "SELECT Date, Lat, Lng, Alt FROM " + fusionTableID + " WHERE TripID = '" + tripID + "' ORDER BY Date ASC";
+                var encodedQuery = encodeURIComponent(query);
+                url.push(encodedQuery);
+                url.push('&callback=parseFusionTablesData');
+                url.push('&key=AIzaSyANk7unPrpT9r-ECaDzH7eLpog-SD8Dz-0');
+                script.src = url.join('');
+                var body = document.getElementsByTagName('body')[0];
+                body.appendChild(script);
+            }   
+
+            function parseFusionTablesData(fusionTablesdata){
+                var rows = fusionTablesdata['rows'];
+                for (var i in rows) {
+                    linePoints[i] = new dataPoint(i, rows[i][0],rows[i][1],rows[i][2],rows[i][3]);
+                }
+                createPlotList();
             }
 
             // UX INPUT STUFF!!!
@@ -175,6 +198,14 @@
                    // window.alert(document.getElementById('csv_input').style.display);
                 }
             }
+            function addLineButtonOnClick(){
+                var fusionTablesRadio = document.getElementById("fusion_tables_radio");
+                if(fusionTablesRadio.checked){
+                    getTrackerInfo();
+                } else{
+                    createPlotList();
+                }
+            }
             // END OF UX STUFF
             
         </script>
@@ -191,7 +222,7 @@
                     Fusion Tables ID <input type="text" name="fusionTableIDField"><br>
                     Trip ID <input type="text" name="tripIDfield"><br>
                 </div>
-                <button onclick="createPlotList()" style="display:none" id = "run_map_button">Run Map</button>
+                <button onclick="addLineButtonOnClick()" style="display:none" id = "run_map_button">Run Map</button>
             </div>
         </div>
         <div id="canvasWrapper" style="width: 100%; height: 100%; position: absolute; z-index: 50;">
