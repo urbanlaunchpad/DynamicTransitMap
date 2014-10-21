@@ -1,7 +1,35 @@
 <html>
-<head>
+    <head>
+        <title>Transit Linr</title>
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+        <meta charset="utf-8">
+        <style>
+            html, body, #map-canvas {
+            height: 100%;
+            margin: 0px;
+            padding: 0px
+            }
+        </style>
+        <script src="./jquery-1.3.2.min.js"></script>
+        <script src="./papaparse.min.js"></script>
+        <script language="javascript"></script>
+        <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+        <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=visualization"></script>
+        <script>
+            // handle the loaded csv data and read it into var data  
+            var linePoints = []; 
+            function handleFileSelect(evt) {
+                var file = evt.target.files[0];
+                Papa.parse(file, {
+                    header: true,
+                    dynamicTyping: true,
+                    complete: function(results) {
+                        data = results;
+                        parseFileData(data);
+                        }
+                    });
+            }
 
-<<<<<<< HEAD
             // We assume that data is ordered on time here and that the timestamp name is Date
             function parseFileData(data){
                 lat = testName(['Lat', 'lat', 'Latitude', 'latitude']);
@@ -91,33 +119,6 @@
             };
             
             google.maps.event.addDomListener(window, 'load', initialize);
-            
-            // Where the drawing happens
-            function initCanvas() {
-                    var canvas = document.getElementById('canvas'),
-                            context = canvas.getContext('2d');
-            
-                    // resize the canvas to fill browser window dynamically
-                    window.addEventListener('resize', resizeCanvas, false);
-                    
-                    function resizeCanvas() {
-                            canvas.width = window.innerWidth;
-                            canvas.height = window.innerHeight;
-                            
-                            /**
-                             * Your drawings need to be inside this function otherwise they will be reset when 
-                             * you resize the browser window and the canvas goes will be cleared.
-                             */
-                            drawStuff(); 
-                    };
-                    resizeCanvas();
-                    
-                    function drawStuff() {
-                            // do your drawing stuff here
-                    };
-            };
-            
-            window.onloadstart(initCanvas());
 
             function dataPoint (index, timestamp, lat, lng, alt){
                 this.index = index;
@@ -126,177 +127,123 @@
                 this.lng = lng;
                 this.alt = alt;
             }
-=======
-<title>Transit Linr</title>
-<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
-<meta charset="utf-8">
-<style>
-    html, body, #map-canvas {
-        height: 100%;
-        margin: 0px;
-        padding: 0px
-    }
-</style>
->>>>>>> fbd74ea70a6bb6fe3a435bebb8ea2407723a2c1d
 
-<script src="./jquery-1.3.2.min.js"></script>
-<script src="./papaparse.min.js"></script>
-<script language="javascript"></script>
+            function getTrackerInfo(){
+                var fusionTableID = "1ZcENe5z6cxNPjH6kQeiTZ-__9-wgdbobvzL_994";
+                var tripID = "T2741456"
+                var script = document.createElement('script');
+                var url = ['https://www.googleapis.com/fusiontables/v1/query?'];
+                url.push('sql=');
+                var query = "SELECT Date, Lat, Lng, Alt FROM " + fusionTableID + " WHERE TripID = '" + tripID + "' ORDER BY Date ASC";
+                var encodedQuery = encodeURIComponent(query);
+                url.push(encodedQuery);
+                url.push('&callback=parseFusionTablesData');
+                url.push('&key=AIzaSyANk7unPrpT9r-ECaDzH7eLpog-SD8Dz-0');
+                script.src = url.join('');
+                var body = document.getElementsByTagName('body')[0];
+                body.appendChild(script);
+            }   
 
-<script type="text/javascript" src="https://www.google.com/jsapi"></script>
-<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=visualization"></script>
-
-<script>
-
-// handle the loaded csv data and read it into var data
-
-var data;
- 
-function handleFileSelect(evt) {
-    var file = evt.target.files[0];
-
-    Papa.parse(file, {
-        header: true,
-        dynamicTyping: true,
-        complete: function(results) {
-            data = results;
+            function parseFusionTablesData(fusionTablesdata){
+                var rows = fusionTablesdata['rows'];
+                for (var i in rows) {
+                    linePoints[i] = new dataPoint(i, rows[i][0],rows[i][1],rows[i][2],rows[i][3]);
+                }
+                createPlotList();
             }
-        });
-    }
 
-$(document).ready(function(){
-    $("#csv-file").change(handleFileSelect);
-    });
+            // UX INPUT STUFF!!!
+            //*************************************+
+            function showInput(){
+                var csvRadio = document.getElementById("csv_radio");
+                var fusionTablesRadio = document.getElementById("fusion_tables_radio");
+                var csvInput = document.getElementById('csv_input');
+                var fusionTablesInput = document.getElementById('fusion_tables_input');
+                var runMapButton = document.getElementById('run_map_button');
+                if(csvRadio.checked){
+                    csvInput.style.display="inherit";
+                    fusionTablesInput.style.display="none";
+                    runMapButton.style.display="inherit";
+                   // window.alert(document.getElementById('csv_input').style.display);
+                } else if(fusionTablesRadio.checked){
+                    csvInput.style.display="none";
+                    fusionTablesInput.style.display="inherit";
+                    runMapButton.style.display="inherit";
+                   // window.alert(document.getElementById('csv_input').style.display);
+                }
+            }
+            function addLineButtonOnClick(){
+                var fusionTablesRadio = document.getElementById("fusion_tables_radio");
+                if(fusionTablesRadio.checked){
+                    getTrackerInfo();
+                } else{
+                    createPlotList();
+                }
+            }
+            // END OF UX STUFF
+            
+        </script>
+    <body>
+        <div id="container" style="height: 50px; width: 100%; position: absolute; z-index: 100; background-color: beige">
+            <div style="height: 40px; padding-top: 10px; padding-left: 10px; width: 300px; font-size: 24;">Transit Linr</div>
+            <div style="width: 300px; padding-top: 2px; padding-left: 10px; padding-right: 10px; float: left; background-color: orange">
+                <input type="radio" name="input_type" value="CSV" id = "csv_radio" onclick = "showInput()">From CSV file
+                <input type="radio" name="input_type" value="Fusion Table" id = "fusion_tables_radio" onclick = "showInput()">From Flocktracker<br>
+                <div style="display:none" id="csv_input">
+                    <input type="file" id="csv-file" name="files"/><br>
+                </div>
+                <div style="display:none" id="fusion_tables_input">
+                    Fusion Tables ID <input type="text" name="fusionTableIDField"><br>
+                    Trip ID <input type="text" name="tripIDfield"><br>
+                </div>
+                <button onclick="addLineButtonOnClick()" style="display:none" id = "run_map_button">Run Map</button>
+            </div>
+        </div>
+        <div id="canvasWrapper" style="width: 90%; height: 90%; position: absolute; z-index: 50;">
+            <canvas id="myCanvas"></canvas>
+        </div>
+        <div id="map-canvas" style="z-index: 0;"></div>
+    </body>
+    <script type="text/javascript">
 
+    // Where the drawing happens
+    function initCanvas() {
+        var canvas = document.getElementById('myCanvas');
+        console.log(canvas);
+        context = canvas.getContext('2d');
 
-// iterate through the csv data to extract lat and lng
-function testName(optionList) {
-    var correctName = '';
-    for (i = 0; i < optionList.length; i++) {
-        if (typeof data['data'][0][optionList[i]] === 'number') {
-            correctName = optionList[i];
-            break;
+        // resize the canvas to fill browser window dynamically
+        window.addEventListener('resize', resizeCanvas, false);
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight; 
+            /**
+             * Your drawings need to be inside this function otherwise they will be reset when 
+             * you resize the browser window and the canvas goes will be cleared.
+             */
+            drawStuff(); 
+        };
+        resizeCanvas();
+        
+        function drawStuff() {
+            var canvas = document.getElementById('myCanvas');
+            var context = canvas.getContext('2d');
+            var centerX = canvas.width / 2;
+            var centerY = canvas.height / 2;
+            var radius = 70;
+
+            context.beginPath();
+            context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+            context.fillStyle = 'green';
+            context.fill();
+            context.lineWidth = 5;
+            context.strokeStyle = '#003300';
+            context.stroke();
         };
     };
-    return correctName;
-}
-
-function fromLatLngToPoint(latLng, map) {
-    var topRight = map.getProjection().fromLatLngToPoint(map.getBounds().getNorthEast());
-    var bottomLeft = map.getProjection().fromLatLngToPoint(map.getBounds().getSouthWest());
-    var scale = Math.pow(2, map.getZoom());
-    var worldPoint = map.getProjection().fromLatLngToPoint(latLng);
-    return new google.maps.Point((worldPoint.x - bottomLeft.x) * scale, (worldPoint.y - topRight.y) * scale);
-}
-
-function createPlotList() {
-    console.log("Generating pointArray...")
-    lat = testName(['Lat', 'lat', 'Latitude', 'latitude']);
-    lng = testName(['Lng', 'lng', 'Longitude', 'longitude']);
-    for(var i = 0; i < (data['data'].length/80); i++) {
-        var marker = new google.maps.Marker({
-            position: new google.maps.LatLng( data['data'][i][lat], data['data'][i][lng] ),
-            map: map,
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 3
-            },
-        });
-        console.log(fromLatLngToPoint(marker.position, map))
+    window.onload=function(){
+        initCanvas();
     };
-    console.log("Done.")
-};
-
-// google maps initial/default script
-google.load("visualization", "1", {packages:["map"]});
-
-function MercatorProjection() {
-    this.pixelOrigin_ = new google.maps.Point(TILE_SIZE / 2,
-        TILE_SIZE / 2);
-    this.pixelsPerLonDegree_ = TILE_SIZE / 360;
-    this.pixelsPerLonRadian_ = TILE_SIZE / (2 * Math.PI);
-};
-
-MercatorProjection.prototype.fromLatLngToPoint = function(latLng, opt_point) {
-    var me = this;
-    var point = opt_point || new google.maps.Point(0, 0);
-    var origin = me.pixelOrigin_;
-
-    point.x = origin.x + latLng.lng() * me.pixelsPerLonDegree_;
-
-    // Truncating to 0.9999 effectively limits latitude to 89.189. This is
-    // about a third of a tile past the edge of the world tile.
-    var siny = bound(Math.sin(degreesToRadians(latLng.lat())), -0.9999, 0.9999);
-    point.y = origin.y + 0.5 * Math.log((1 + siny) / (1 - siny)) * -me.pixelsPerLonRadian_;
-    return point;
-};
-
-var map;
-
-function initialize() {
-    var mapOptions = {
-        zoom: 15,
-        center: new google.maps.LatLng(19.3100, -99.05250)
-    };
-    map = new google.maps.Map(document.getElementById('map-canvas'),
-        mapOptions);
-};
-
-google.maps.event.addDomListener(window, 'load', initialize);
-
-</script>
-
-<body>
-
-<div id="container" style="height: 50px; width: 100%; position: absolute; z-index: 100; background-color: beige"><div style="height: 40px; padding-top: 10px; padding-left: 10px; width: 300px; font-size: 24;">Transit Linr</div>
-<div style="height: 20px; width: 300px; padding-top: 2px; padding-left: 10px; padding-right: 10px; float: left; background-color: orange"><input type="file" id="csv-file" name="files"/><button onclick="createPlotList()">Run Map</button></div></div>
-
-<div id="canvasWrapper" style="width: 90%; height: 90%; position: absolute; z-index: 50;"><canvas id="myCanvas"></canvas></div>
-<div id="map-canvas" style="z-index: 0;"></div>
-
-</body>
-
-<script type="text/javascript">
-
-// Where the drawing happens
-function initCanvas() {
-    var canvas = document.getElementById('myCanvas');
-    console.log(canvas);
-    context = canvas.getContext('2d');
-
-    // resize the canvas to fill browser window dynamically
-    window.addEventListener('resize', resizeCanvas, false);
-    
-    function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-            
-        /**
-         * Your drawings need to be inside this function otherwise they will be reset when 
-         * you resize the browser window and the canvas goes will be cleared.
-         */
-        drawStuff(); 
-    };
-    resizeCanvas();
-    
-    function drawStuff() {
-        var canvas = document.getElementById('myCanvas');
-        var context = canvas.getContext('2d');
-        var centerX = canvas.width / 2;
-        var centerY = canvas.height / 2;
-        var radius = 70;
-
-        context.beginPath();
-        context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-        context.fillStyle = 'green';
-        context.fill();
-        context.lineWidth = 5;
-        context.strokeStyle = '#003300';
-        context.stroke();
-    };
-};
-
-window.onloadstart(initCanvas());
-
-</script>
+    </script>
 </html>
