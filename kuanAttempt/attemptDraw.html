@@ -68,7 +68,8 @@
             }
             
             function createPlotList() {
-                for(var i = 0; i < linePoints.length; i++) {
+                var interval = Math.round(linePoints.length/50);
+                for(var i = 0; i < linePoints.length; i = i+interval) {
                     var marker = new google.maps.Marker({
                         position: new google.maps.LatLng(linePoints[i].lat, linePoints[i].lng),
                         map: map,
