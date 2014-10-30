@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>Transit Linr</title>
+        <title>Transit Linrss</title>
         <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
         <meta charset="utf-8">
         <style>
@@ -65,9 +65,30 @@
                 var bottomLeft = map.getProjection().fromLatLngToPoint(map.getBounds().getSouthWest());
                 var scale = Math.pow(2, map.getZoom());
                 var worldPoint = map.getProjection().fromLatLngToPoint(latLng);
-                return new google.maps.Point((worldPoint.x - bottomLeft.x) * scale, (worldPoint.y - topRight.y) * scale);
+                // return new google.maps.Point((worldPoint.x - bottomLeft.x) * scale, (worldPoint.y - topRight.y) * scale);
+                xRes = (worldPoint.x - bottomLeft.x) * scale
+                console.log(xRes)
+                yRes = (worldPoint.y - topRight.y) * scale
+                // console.log(yRes)
+                return [worldPoint.x, worldPoint.y]
             }
-            
+
+            function drawStuff(xLoc, yLoc) {
+                var canvas = document.getElementById('myCanvas');
+                var context = canvas.getContext('2d');
+                var centerX = canvas.height/2;
+                var centerY = canvas.width/2;
+                var radius = 3;
+
+                context.beginPath();
+                context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+                context.fillStyle = 'green';
+                context.fill();
+                context.lineWidth = 1;
+                context.strokeStyle = '#003300';
+                context.stroke();
+            };
+            superGlob = []
             function createPlotList() {
                 var interval = Math.round(linePoints.length/50);
                 for(var i = 0; i < linePoints.length; i = i+interval) {
@@ -79,9 +100,12 @@
                             scale: 3
                         },
                     });
-                    fromLatLngToPoint(marker, map);
-                    console.log("clear");
-                    console.log(fromLatLngToPoint(marker.position, map))
+                    pointLoc = fromLatLngToPoint(marker.position, map);
+                    x = pointLoc[0];
+                    y = pointLoc[1];
+                    // drawStuff(x, y);
+                    superGlob.push(pointLoc)
+                    console.log(x, y);
                 };
                 console.log("Done.")
             };
@@ -207,51 +231,51 @@
                 <button onclick="addLineButtonOnClick()" style="display:none" id = "run_map_button">Run Map</button>
             </div>
         </div>
-        <div id="canvasWrapper" style="width: 100%; height: 100%; position: absolute; z-index: 50; float-offset: : right;">
-            <canvas id="myCanvas"></canvas>
-        </div>
+
+        <canvas id="myCanvas" style="position: absolute; z-index: 50; width: 1200px; height: 450px"></canvas>
         <div id="map-canvas" style="z-index: 0;"></div>
     </body>
     <script type="text/javascript">
 
-    // Where the drawing happens
-    function initCanvas() {
+// Where the drawing happens
+function initCanvas() {
+    var canvas = document.getElementById('myCanvas');
+    context = canvas.getContext('2d');
+
+    // resize the canvas to fill browser window dynamically
+    window.addEventListener('resize', resizeCanvas, false);
+    
+    function resizeCanvas() {
+        console.log("lis");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+            
+        /**
+         * Your drawings need to be inside this function otherwise they will be reset when 
+         * you resize the browser window and the canvas goes will be cleared.
+         */
+        console.log(superGlob);
+        for i in superGlob:
+            drawStuff(i); 
+    };
+    resizeCanvas();
+    
+    function drawStuff(point) {
         var canvas = document.getElementById('myCanvas');
-        console.log(canvas);
-        context = canvas.getContext('2d');
+        var context = canvas.getContext('2d');
+        var centerX = point[0];
+        var centerY = point[1];
+        var radius = 70;
 
-        // resize the canvas to fill browser window dynamically
-        window.addEventListener('resize', resizeCanvas, false);
-        
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight; 
-            /**
-             * Your drawings need to be inside this function otherwise they will be reset when 
-             * you resize the browser window and the canvas goes will be cleared.
-             */
-            // drawStuff(); 
-        };
-        resizeCanvas();
-        
-        // function drawStuff() {
-        //     var canvas = document.getElementById('myCanvas');
-        //     var context = canvas.getContext('2d');
-        //     var centerX = canvas.width / 2;
-        //     var centerY = canvas.height / 2;
-        //     var radius = 70;
+        context.beginPath();
+        context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+        // context.fill();
+        context.lineWidth = 5;
+        context.strokeStyle = '#003300';
+        context.stroke();
+    };
+};
 
-        //     context.beginPath();
-        //     context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-        //     context.fillStyle = 'green';
-        //     context.fill();
-        //     context.lineWidth = 5;
-        //     context.strokeStyle = '#003300';
-        //     context.stroke();
-        // };
-    };
-    window.onload=function(){
-        // initCanvas();
-    };
+window.onloadstart(initCanvas());
     </script>
 </html>

@@ -1,0 +1,309 @@
+<html>
+    <head>
+
+        <title>Transit Linr</title>
+
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+        <meta charset="utf-8">
+
+        <!-- CSS Notes -->
+        <style>
+            html, body, #map{
+            height: 100%;
+            margin: 0px;
+            padding: 0px
+            }
+
+            #headerBanner {
+                background-color: #999980;
+            }
+
+            #headerName {
+                width: 33%;
+                float: left;
+                padding-left: 10%; 
+                padding-top: 12px; 
+
+                font-size: 24;
+                font-family: Sans-Serif;
+                font-weight: 900;
+                color: #333300; 
+            }
+
+            #dataSelector {
+                float: left;
+                border-radius: 5px;
+                background-color: #999980;
+                padding: 15px;
+
+                font-size: 12;
+                font-family: Sans-Serif;
+                font-weight: 500;
+                color: #333300;
+            }
+        </style>
+
+        <!-- Loading JS Scripts: Data Management -->
+        <script src="./papaparse.min.js"></script>
+
+        <!-- Loading JS Scripts: JQuery -->
+        <script src="./jquery-1.3.2.min.js"></script>
+
+        <!-- Loading JS Scripts: Google Maps Related -->
+        <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCMw_8OYHp-HWgJVtLB-zZmDtBUefmCXFQ&sensor=false&libraries=visualization"></script>
+        <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+        
+        <!-- On-Screen Activities -->
+        <script>
+
+            //*************************************+
+            // UX INPUT STUFF
+            //*************************************+
+
+            function showInput(){
+
+                var csvRadio = document.getElementById("csv_radio");
+                var fusionTablesRadio = document.getElementById("fusion_tables_radio");
+                var csvInput = document.getElementById('csv_input');
+                var fusionTablesInput = document.getElementById('fusion_tables_input');
+                var runMapButton = document.getElementById('run_map_button');
+
+                if(csvRadio.checked){
+                    csvInput.style.display="inherit";
+                    fusionTablesInput.style.display="none";
+                    runMapButton.style.display="inherit";
+                    }
+
+                else if(fusionTablesRadio.checked){
+                    csvInput.style.display="none";
+                    fusionTablesInput.style.display="inherit";
+                    runMapButton.style.display="inherit";
+                    }
+                }
+
+            function addLineButtonOnClick(){
+                var fusionTablesRadio = document.getElementById("fusion_tables_radio");
+
+                if(fusionTablesRadio.checked){
+                    getTrackerInfo();
+                    
+                } else{
+                    createPlotList(linePoints);
+                }
+
+                var csvInput = document.getElementById('csv_input');
+                var fusionTablesInput = document.getElementById('fusion_tables_input');
+                var runMapButton = document.getElementById('run_map_button');
+
+                csvInput.style.display="none";
+                fusionTablesInput.style.display="none";
+                runMapButton.style.display="none";
+            }
+
+            //*************************************+
+            // CSV READ METHOD
+            //*************************************+
+
+            var linePoints = []; 
+
+            function testName(optionList) {
+                var correctName = null;
+                for (i = 0; i < optionList.length; i++) {
+                    if (typeof data['data'][0][optionList[i]] !== 'undefined') {
+                        correctName = optionList[i];
+                        break;
+                        };
+                    };
+                return correctName;
+                }
+
+            function handleFileSelect(evt) {
+                var file = evt.target.files[0];
+                Papa.parse(file, {
+                    header: true,
+                    dynamicTyping: true,
+                    complete: function(results) {
+                        data = results;
+                        parseFileData(data);
+                        }
+                        });
+                }
+
+            // WARNING: I do not feel good about this, too much hard-coding.
+            function parseDataPoint(dp) {
+                var separators = [' ', '/', ':'];
+                var tokens = dp.split(new RegExp(separators.join('|'), 'g'));
+                var dateRes = new Date(tokens[2], tokens[0][tokens[1][tokens[3][tokens[4]]]]);;
+                return dateRes
+            }
+
+            function parseFileData(data, tripID){
+                lat = testName(['Lat', 'lat', 'Latitude', 'latitude']);
+                lng = testName(['Lng', 'lng', 'long', 'Long', 'Longitude', 'longitude']);
+                time = testName(['date', 'Date', 'dat', 'd']);
+                trip = testName(['TripID', 'Trip_ID', 'Trip ID', 'trip id']);
+
+                if (lat==null || lng==null || trip==null || time==null) {
+                    console.log('Returning null... specific paramters missing.');
+                    return null
+                    }
+                for(var i = 0; i < data['data'].length; i++) {
+                    linePoints[i] = new dataPoint(i, data['data'][i][time], data['data'][i][trip], data['data'][i][lat], data['data'][i][lng]);
+                        }
+
+                function isTripID(id, tripID) {
+                    if (id.trip == tripID) {
+                        console.log("this worked: ", id.trip, "is", tripID);
+                        return true
+                        }
+                    };
+
+                linePoints = linePoints.filter(isTripID);
+
+                linePoints.sort(
+                    function(a, b) {
+                        a = parseDataPoint(a.timestamp);
+                        b = parseDataPoint(b.timestamp);
+                        return a - b
+                        }
+                    );
+                
+                console.log(linePoints);
+                    }
+
+            tripID = "T2741456"
+
+            $(document).ready(function(){
+                $("#csv-file").change(handleFileSelect, tripID);
+                });
+
+            //*************************************+
+            // FUSION TABLES READ METHOD
+            //*************************************+
+
+            function dataPoint (index, timestamp, lat, lng, alt){
+                this.index = index;
+                this.timestamp = timestamp;
+                this.lat = lat;
+                this.lng = lng;
+                this.alt = alt;
+                }
+
+            function getTrackerInfo(){
+                var fusionTableID = "1ZcENe5z6cxNPjH6kQeiTZ-__9-wgdbobvzL_994";
+                var tripID = "T2741456"
+                var script = document.createElement('script');
+                var url = ['https://www.googleapis.com/fusiontables/v1/query?'];
+
+                url.push('sql=');
+
+                var query = "SELECT Date, Lat, Lng, Alt FROM " + fusionTableID + " WHERE TripID = '" + tripID + "' ORDER BY Date ASC";
+                var encodedQuery = encodeURIComponent(query);
+                
+                url.push(encodedQuery);
+                url.push('&callback=parseFusionTablesData');
+                url.push('&key=AIzaSyANk7unPrpT9r-ECaDzH7eLpog-SD8Dz-0');
+                script.src = url.join('');
+                
+                var body = document.getElementsByTagName('body')[0];
+                
+                body.appendChild(script);
+                }
+
+            function parseFusionTablesData(fusionTablesdata){
+                var rows = fusionTablesdata['rows'];
+                for (var i in rows) {
+                    linePoints[i] = new dataPoint(i, rows[i][0],rows[i][1],rows[i][2],rows[i][3]);
+                    }
+                createPlotList(linePoints);
+                }
+
+            //*************************************+
+            // PRODUCE GOOGLE MAPS MARKERS
+            //*************************************+
+
+            // function createPlotList() {
+            //     var interval = Math.round(linePoints.length/50);
+            //     for(var i = 0; i < linePoints.length; i = i+interval) {
+            //         var marker = new google.maps.Marker({
+            //             position: new google.maps.LatLng(linePoints[i].lat, linePoints[i].lng),
+            //             map: map,
+            //             icon: {
+            //                 path: google.maps.SymbolPath.CIRCLE,
+            //                 scale: 3
+            //                 },
+            //             });
+            //         };
+            //     };
+
+            function createPlotList(pointsArray) {
+                var interval = Math.round(pointsArray.length/200);
+                var routeCoordinates = []
+
+                for(var i = 0; i < pointsArray.length; i = i+interval) {
+                    var marker = new google.maps.LatLng(pointsArray[i].lat, pointsArray[i].lng);
+                    routeCoordinates.push(marker);
+                    };
+                
+                var travelPath = new google.maps.Polyline({
+                    path: routeCoordinates,
+                    geodesic: true,
+                    strokeColor: '#FF0000',
+                    strokeOpacity: 1.0,
+                    strokeWeight: 2
+                    });
+
+                  travelPath.setMap(map);
+                }
+            
+        </script>
+
+    <body>
+
+        <div id="headerBanner" style="height: 50px; width: 100%; position: absolute; z-index: 100;">
+            
+            <div id="headerName">Transit Linr</div>
+            <div id="dataSelector">
+                
+                <input type="radio" name="input_type" value="CSV" id = "csv_radio" onclick = "showInput()">From CSV</input>
+                <input type="radio" name="input_type" value="Fusion Table" id = "fusion_tables_radio" onclick = "showInput()">From Flocktracker</input>
+
+                <div style="display:none" id="csv_input">
+                    <br>
+                    <input type="file" id="csv-file" name="files"/>
+                    <br>
+                </div>
+
+                <div style="display:none" id="fusion_tables_input">
+                    <br>
+                    <input type="text" name="fusionTableIDField" value="Fusion Tables ID">
+                    <input type="text" name="tripIDfield" value="Trip ID">
+                    <br>
+                </div>
+
+                <button onclick="addLineButtonOnClick()" style="display:none;" id = "run_map_button">Run Map</button>
+
+            </div>
+        </div>
+
+        <div id="map" style="z-index: 0;">
+            
+        </div>
+
+    </body>
+
+    <script type="text/javascript">
+
+        var myOptions = {
+            zoom: 15,
+            center: new google.maps.LatLng(19.3100, -99.05250),
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            styles: [{"featureType":"administrative","stylers":[{"visibility":"off"}]},{"featureType":"poi","stylers":[{"visibility":"simplified"}]},{"featureType":"road","stylers":[{"visibility":"simplified"}]},{"featureType":"water","stylers":[{"visibility":"simplified"}]},{"featureType":"transit","stylers":[{"visibility":"simplified"}]},{"featureType":"landscape","stylers":[{"visibility":"simplified"}]},{"featureType":"road.highway","stylers":[{"visibility":"off"}]},{"featureType":"road.local","stylers":[{"visibility":"on"}]},{"featureType":"road.highway","elementType":"geometry","stylers":[{"visibility":"on"}]},{"featureType":"water","stylers":[{"color":"#84afa3"},{"lightness":52}]},{"stylers":[{"saturation":-77}]},{"featureType":"road"}],
+            disableDefaultUI: true,
+            };
+
+        var map = new google.maps.Map(document.getElementById('map'), myOptions);
+
+    </script>
+
+</html>
